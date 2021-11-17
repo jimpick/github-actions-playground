@@ -26,7 +26,7 @@ func main() {
 	router := gin.Default()
 	router.GET("/albums", getAlbums)
 
-	router.Run("localhost:" + os.Getenv("PORT"))
+	router.Run("0.0.0.0:" + os.Getenv("PORT"))
 }
 
 // getAlbums responds with the list of all albums as JSON.
