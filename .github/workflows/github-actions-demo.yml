@@ -1,23 +1,29 @@
 name: GitHub Actions Demo
+
 on: [push]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}-go-example
+
 jobs:
-  Explore-GitHub-Actions:
+  run-buildpack-and-push-oci-image:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Check out repository code
+      - name: Check out repository
         uses: actions/checkout@v2
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+
       - name: buildpacks-action
         # You may pin to the exact commit or the version.
         uses: mamezou-tech/buildpacks-action@2dae9b2cb4ebee59ed45f598bf314ca7fc7116b4
         # uses: mamezou-tech/buildpacks-action@v0.5.0
         with:
           # Name of container image
-          image: playground-go-web-api
+          image: ${{ env.IMAGE_NAME }}
           # Tag of container image
           #tag: # optional, default is latest
           # Path to target application, defaults to the current directory
@@ -30,7 +36,27 @@ jobs:
           # env: # optional
           # Read build-time environment variables from these files
           # env_files: # optional
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: List Docker images
+        run: docker images
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
