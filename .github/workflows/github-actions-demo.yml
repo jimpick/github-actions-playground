@@ -53,5 +53,8 @@ jobs:
       - name: List Docker images
         run: docker images
 
+      - name: Tag Docker image
+        run: docker image tag ${{ env.IMAGE_NAME }} ${{ env.REGISTRY}}/${{ env.IMAGE_NAME }}
+
       - name: Push Docker image
-        run: docker push ${{ env.REGISTRY}}/${{ env.IMAGE_NAME }}
+        run: docker image push ${{ env.REGISTRY}}/${{ env.IMAGE_NAME }}
